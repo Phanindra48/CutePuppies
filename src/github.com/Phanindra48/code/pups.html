@@ -1,0 +1,29 @@
+<html>
+<head>
+<style type="text/css">
+</style>
+</head>
+<body>
+Phanindra {{.Total}}
+<div>
+{{.Page}}
+</div>
+<span>{{.Pages}}</span>
+
+{{range $index, $element := .Images}}
+
+    <div>   
+    <span> {{ $index }} - {{ $element.Title }}</span>
+    <div>
+    	<div><img src="{{ $element.Large}}" class="puppy"></div>
+    	<div>
+    		<button class="btn btn-default puppyLike" click="cutePuppies.like($element)">Like[{{$element.UpVotes}}]</button>
+    		<button class="btn btn-default">UnLike[{{$element.DownVotes}}]</button>
+    	</div>
+    </div>
+    </div>
+{{ end }}
+
+<script type="text/javascript" src="./js/route.js"></script>
+</body>
+</html>
