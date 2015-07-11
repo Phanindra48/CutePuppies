@@ -1,7 +1,7 @@
 {
   "name": "CutePuppiesApp",
   "version": "1.0.0",
-  "description": "Simple photo fetching app with upvotes and downvotes",
+  "description": "Simple photo fetching app with Aye and Nay",
   "scripts": {
     "start":"app.js"
   },
@@ -13,8 +13,7 @@
   "author": "Phanindra Pydisetty",
   "license": "MIT",
   "dependencies": {
-    "http-server": "^0.6.1",
-    "expres":"~3.4.7"
+    "http-server": "^0.6.1"
   },
   "repository": {
     "type": "git",

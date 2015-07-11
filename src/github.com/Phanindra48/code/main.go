@@ -2,16 +2,16 @@ package main
 
 import(
 	"encoding/xml"
-	//"encoding/json"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"github.com/gorilla/mux"
 
 	"net/url"
-	"strconv"
 	"log"
 	"io/ioutil"
 	"html/template"
+	"strconv"
 )
 
 const (
@@ -57,6 +57,10 @@ type Photo struct {
 	Large_T     string `xml:"large_t,attr"`
 }
 
+type Vote struct {
+	ID string `json:"id"`
+	VT bool   `json:"vt"`
+}
 // Returns the URL to this photo in the specified size.
 func (p *Photo) URL(size string) string {
 	if size == "-" {
@@ -89,51 +93,13 @@ type PuppiesResponse struct {
 	Images  []*Image `json:"images"`
 }
 
-
-type ImageManager struct {
-	images []*Image
-}
-
-func NewImageManager() *ImageManager {
-	return &ImageManager{}
-}
-
-func (m *ImageManager) GetPuppiesResponse(searchResponse *SearchResponse) *PuppiesResponse {
-	page, err := strconv.Atoi(searchResponse.Page)
-	pages, err := strconv.Atoi(searchResponse.Pages)
-	perPage, err := strconv.Atoi(searchResponse.PerPage)
-	total, err := strconv.Atoi(searchResponse.Total)
-	if err != nil {
-		log.Println(err)
-		return nil
-	}
-	return &PuppiesResponse{page, pages, perPage, total, m.images}
-}
-
-func (m *ImageManager) Save(image *Image) error {
-	for _, im := range m.images {
-		if im.ID == image.ID {
-			return nil
-		}
-	}
-
-	m.images = append(m.images, cloneImage(image))
-	return nil
-}
-
-func cloneImage(i *Image) *Image {
-	c := *i
-	return &c
-}
-
-func (m *ImageManager) NewImage(photo Photo) *Image {
-	return &Image{photo.ID, photo.Title, photo.URL(SizeThumbnail), photo.URL(SizeOriginal), 0, 0}
-}
-
 func ListPuppies(w http.ResponseWriter, r *http.Request) {
-	//fmt.Fprintf(w,"Puppy")
-	tags := "puppy,dogs,dog,cute"
-	page := "1"
+	page := mux.Vars(r)["page"]
+	if page == "" {
+		page = "1"
+	}
+	tags := "puppy,dogs,dog,cute,pugs"
+
 	baseUrl, err := url.Parse(FlickrEndPoint)
 
 	params := url.Values{}
@@ -143,7 +109,7 @@ func ListPuppies(w http.ResponseWriter, r *http.Request) {
 	params.Add("per_page", "20")
 	params.Add("page", page)
 	params.Add("safe_search", "2")
-	params.Add("group_id","70557968@N00")
+	params.Add("group_id","603018@N22")
 	params.Add("sort", "date-posted-asc")
 
 	baseUrl.RawQuery = params.Encode()
@@ -187,6 +153,50 @@ func ListPuppies(w http.ResponseWriter, r *http.Request) {
 		tempIDs = append(tempIDs, img.ID)
 	}
 
+	dbError := imageManager.InitDB(false)
+	if dbError != nil {
+		log.Printf("%q\n", dbError)
+		return
+	}
+	defer imageManager.GetDB().Close()
+
+	all := imageManager.All()
+
+	dbPuppies := imageManager.FindOldPuppies(tempIDs)
+
+	var newPuppies []*Image
+
+	if len(dbPuppies) == 0 {
+		imageManager.InsertPuppies(all)
+	} else {
+		for _, puppy := range dbPuppies {
+			id := puppy.ID
+			for _, allP := range all {
+				//allPID, _ := strconv.Atoi(allP.ID)
+				if allP.ID == id {
+					allP.DownVotes = puppy.DownVotes
+					allP.UpVotes = puppy.UpVotes
+				} else {
+					exists := true
+					var existingPuppy *Image
+					for _, np := range newPuppies {
+						//nPID, _ := strconv.Atoi(np.ID)
+						if np.ID == allP.ID {
+							exists = false
+							existingPuppy = allP
+							break
+						}
+					}
+					if exists == false {
+						newPuppies = append(newPuppies, existingPuppy)
+					}
+				}
+			}
+		}
+		imageManager.InsertPuppies(newPuppies)
+	}
+
+
 	puppiesResponse := imageManager.GetPuppiesResponse(&searchResponse)
 	//response, err := json.Marshal(puppiesResponse)
 
@@ -199,18 +209,65 @@ func ListPuppies(w http.ResponseWriter, r *http.Request) {
 	templates.ExecuteTemplate(w,"pups.html",puppiesResponse)
 }
 
+func UpdatePuppy(w http.ResponseWriter, r *http.Request) {
+	var v Vote
+	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
+		println("some error")
+	}
 
+	imageManager := NewImageManager()
+
+	dbError := imageManager.InitDB(false)
+	if dbError != nil {
+		log.Printf("%q\n", dbError)
+		return
+	}
+
+	defer imageManager.GetDB().Close()
+	id, err := strconv.Atoi(v.ID)
+	imageManager.UpdateVotes(id, v.VT)
+
+	response, err := json.Marshal(v)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(response)
+}
+
+func cloneImage(i *Image) *Image {
+	c := *i
+	return &c
+}
 
 //template concatenator kind of
 var templates = template.Must(template.ParseFiles("edit.html", "pups.html"))
 
 
 func main(){
-	//imageManager := NewImageManager()
+	imageManager := NewImageManager()
+	dbError := imageManager.InitDB(false)
+
+	defer imageManager.GetDB().Close()
+
+	if dbError != nil {
+		log.Printf("%q\n", dbError)
+		return
+	} else {
+		imageManager.CreateTables()
+	}
+
 	r := mux.NewRouter().StrictSlash(false)
 	
 	pups := r.Path(PathPrefix).Subrouter()
 	pups.Methods("GET").HandlerFunc(ListPuppies)
+
+	//update puppy likes/dislikes
+	pupsUpdate := r.Path(PathPrefix).Subrouter()
+	pupsUpdate.Methods("PUT").HandlerFunc(UpdatePuppy)
+
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("../../../content/")))
 	http.Handle("/", r)
 	http.ListenAndServe(":8080",nil)
