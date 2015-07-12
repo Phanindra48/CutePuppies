@@ -1,4 +1,0 @@
-.envrc
-*.coverprofile
-stormpath-sdk-go.test
-Godeps/
