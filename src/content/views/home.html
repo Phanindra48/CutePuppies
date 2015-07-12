@@ -6,6 +6,64 @@
         <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" type="text/css" href="../css/app.css">
         <style type="text/css">
+            html body .card {
+                position: relative;
+                display: block;
+                padding-bottom: 30px;
+                /*margin-bottom: 20px;*/
+            }
+            .imgContainer {
+                position: relative;
+                float: left;
+            }
+            .clearfix{
+                zoom:1;
+            }
+            .imgWrapper {
+                position: relative;
+                display: block;
+                border: 0;
+                padding: 0;
+                margin: 0;
+                background-color: #000;
+                float: left;
+                text-align: center;
+                box-shadow: #e9ebec 0 2px 2px;
+            }
+            .imgWrapper .session-image-wrapper {
+                overflow: hidden;
+            }
+            .imgWrapper img {
+                vertical-align: middle;
+            }
+            .imgWrapper .thin-facade {
+                display: block;
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: url(https://s.yimg.com/pw/images/spaceout.gif);
+            }
+
+            div.session-image-wrapper:hover > a.choice {
+                display: block;
+            }
+            div.session-image-wrapper > a.choice {
+                position:absolute;
+                display:none;
+            }
+            div.session-image-wrapper > a.puppyLike {
+                top: 0;
+                left:0;
+            }
+            div.session-image-wrapper > a.puppyDisLike {
+                left:79%;
+                top: 0;
+            }
+
+
+
         </style>
     </head>
 
@@ -25,11 +83,15 @@
                         <li id="menu-item-23" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-23">
                             <a class="topPuppies">Top Puppies</a>
                         </li>
+                        <li id="menu-item-22" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-22">
+                            <!--<input type="submit" value="Logout" />-->
+                            <a type="submit" class="appLogout">Logout</a>
+                        </li>
                     </ul>           
                 </nav>
             </div>
         </header>
-        <div id="page-content" class="page-content">
+        <div id="page-content" class="page-content" style="margin: 0 auto;width: 800px;  padding-top: 102px;">
             
         </div>
 

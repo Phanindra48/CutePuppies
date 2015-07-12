@@ -27,6 +27,13 @@ cutePuppies = (function(){
       $('.allPuppies').off().on('click',function(){
         functions.getAllPuppies();
       });
+
+      $('.appLogout').off().on('click',function(){
+        $.post('/logout',function(data){
+          window.location.href = '/'
+        });
+      });
+
     },
     getAllPuppies:function(){
       $.ajax({

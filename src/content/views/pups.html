@@ -1,48 +1,29 @@
-<!--<html>
-<head>
-<link href="./css/bootstrap.css" rel="stylesheet">
-</head>
-<body>
-Phanindra {{.Total}}
-<div>
-{{.Page}}
-</div>
-<span>{{.Pages}}</span>
-<div class="puppyContainer">
-{{range $index, $image := .Images}}
-
-    <div>   
-    <span> {{ $index }} - {{ $image.Title }}</span>
-    <div>
-        <div><img src="{{ $image.Large}}" class="puppy"></div>
-        <div>
-            <a class="btn btn-info btn-lg puppyLike" data-puppy-id={{$image.ID}}>
-            <span class="glyphicon glyphicon-thumbs-up"></span>
-                Like 
-             <span id="likes">{{$image.UpVotes}}</span>
-             </a>
-             <a class="btn btn-info btn-lg puppyDisLike" data-puppy-id={{$image.ID}}>
-             <span class="glyphicon glyphicon-thumbs-down"></span>
-                Dis Like 
-             <span id="dislikes">{{$image.DownVotes}}</span>
-             </a>
-        </div>
-    </div>
-    </div>
-{{ end }}
-</div>
-
-<script type="text/javascript" src="./js/jquery.js"></script>
-<script type="text/javascript" src="./js/app.js"></script>
-</body>
-</html>
--->
 <div data-page={{.Page}}>
     {{range $index, $image := .Images}}
+        <div class="card clearfix">
+            <div class="imgContainer">
+                <div class="imgWrapper" data-photo-id={{ $image.ID}} data-title={{ $image.Title}}>
+                    <div class="session-image-wrapper" style="height: auto;">
+                        <a href="#" data-photo-id={{$image.ID}}>
+                            <img src="{{ $image.Large}}" class="puppy" alt="{{ $image.Title}}" width="750" height="auto" style="width:750px;height:auto;">
 
-        <div data-image-id={{ $image.ID}} data-title={{ $image.Title}} >
-            <div><img src="{{ $image.Large}}" class="puppy" alt="{{ $image.Title}}"></div>
-            <div>
+                            <span class="thin-facade"></span>
+                        </a>
+                        <a class="btn btn-info btn-lg puppyLike choice" data-puppy-id={{$image.ID}}>
+                            <span class="glyphicon glyphicon-thumbs-up"></span>
+                                Like 
+                             <span id="likes">{{$image.UpVotes}}</span>
+                        </a>
+                        <a class="btn btn-info btn-lg puppyDisLike choice" data-puppy-id={{$image.ID}}>
+                            <span class="glyphicon glyphicon-thumbs-down"></span>
+                                Dis Like 
+                            <span id="dislikes">{{$image.DownVotes}}</span>
+                        </a>
+                    </div>     
+                </div>
+            </div>
+            
+            <!--<div>
                 <a class="btn btn-info btn-lg puppyLike" data-puppy-id={{$image.ID}}>
                 <span class="glyphicon glyphicon-thumbs-up"></span>
                     Like 
@@ -53,7 +34,7 @@ Phanindra {{.Total}}
                     Dis Like 
                  <span id="dislikes">{{$image.DownVotes}}</span>
                  </a>
-            </div>
+            </div>-->
         </div>
     {{ end }}
 </div>

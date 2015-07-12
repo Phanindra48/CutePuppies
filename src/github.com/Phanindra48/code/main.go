@@ -318,6 +318,7 @@ func loginHandler(response http.ResponseWriter, request *http.Request) {
  }
  
  func logoutHandler(response http.ResponseWriter, request *http.Request) {
+ 	fmt.Printf("logout \n")
      clearSession(response)
      http.Redirect(response, request, "/", 302)
  }
