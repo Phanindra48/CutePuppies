@@ -8,6 +8,7 @@ cutePuppies = (function(){
   var globals = {
     upvotes:[],
     downvotes:[],
+    currentPage:"1"
   }
   var functions = {
     init:function(){
@@ -22,8 +23,38 @@ cutePuppies = (function(){
       $('.puppy').off().on('click',function(){
         functions.enlargeImage();
       });
-    },
 
+      $('.allPuppies').off().on('click',function(){
+        functions.getAllPuppies();
+      });
+    },
+    getAllPuppies:function(){
+      $.ajax({
+        url: '/pups',
+        type: 'GET',
+        //dataType: "json",
+        data:JSON.stringify({
+          page : '1'
+        })
+      })
+      .done(function (data, textStatus, jqXHR) {
+        var obj;
+        try {
+            obj = JSON.parse(data);
+        } catch (e) {
+            obj = data;
+        }
+        if (typeof obj.Error != 'undefined' && obj.Error != '') {
+          alert(obj.Error);
+        }
+        else{
+          $('.page-content').append(data);
+        }
+        })
+        .fail(function (jqXHR, textStatus, errorThrown) {
+            alert('getAllPuppies -> ' + errorThrown);
+        });
+    },
     like:function(){
       var likeButton = $(event.target);
       var puppyId = likeButton.data('puppy-id');
@@ -61,7 +92,7 @@ cutePuppies = (function(){
       }
     },
     enlargeImage: function(){
-      alert('dsfsdf');
+      alert('enlarge image');
     }
   };
   return {
@@ -105,4 +136,32 @@ function enlargeImage(){
 
 }
 
+*/
+
+/*
+var express = require('express');
+var stormpath = require('express-stormpath');
+
+var app = express();
+
+app.set('views', './views');
+app.set('view engine', 'jade');
+
+var stormpathMiddleware = stormpath.init(app, {
+  apiKeyFile: 'C:\\Users\\ppydisetty\\Documents\\GitHub\\CutePuppies\\apiKey.properties',
+  application: 'https://api.stormpath.com/v1/applications/4pYa9wtcIPe7PCmKPh0t1A',
+  secretKey: 'GYrHnNdIwrYIPRalAFX1GdXMFAHpGcOjJS5U3VA',
+  expandCustomData: true,
+  enableForgotPassword: true
+});
+
+app.use(stormpathMiddleware);
+
+app.get('/', function(req, res) {
+  res.render('home', {
+    title: 'Welcome'
+  });
+});
+
+app.listen(8080);
 */

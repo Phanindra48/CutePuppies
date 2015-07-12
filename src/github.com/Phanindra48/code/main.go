@@ -12,6 +12,8 @@ import(
 	"io/ioutil"
 	"html/template"
 	"strconv"
+	//"github.com/jarias/stormpath-sdk-go"
+	"github.com/gorilla/securecookie"
 )
 
 const (
@@ -31,6 +33,7 @@ const (
 	FlickrKey      = "60c30ef17e8d7721d395b8f158b1709f"
 	PathPrefix     = "/pups"
 	TopPupsPrefix  = "/top"
+	viewsPath	   = "../../../content/views/"
 )
 
 // Response for photo search requests.
@@ -97,6 +100,7 @@ func ListPuppies(w http.ResponseWriter, r *http.Request) {
 	page := mux.Vars(r)["page"]
 	if page == "" {
 		page = "1"
+		fmt.Printf("page ID -> %s \n",page)
 	}
 	tags := "puppy,dogs,dog,cute,pugs"
 
@@ -205,6 +209,7 @@ func ListPuppies(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "text/html")
 	//w.Write(response)
 	templates.ExecuteTemplate(w,"pups.html",puppiesResponse)
 }
@@ -212,14 +217,14 @@ func ListPuppies(w http.ResponseWriter, r *http.Request) {
 func UpdatePuppy(w http.ResponseWriter, r *http.Request) {
 	var v Vote
 	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
-		println("some error")
+		println("Error while decoding Vote object")
 	}
 
 	imageManager := NewImageManager()
 
 	dbError := imageManager.InitDB(false)
 	if dbError != nil {
-		log.Printf("%q\n", dbError)
+		log.Printf("dbError -> %q\n", dbError)
 		return
 	}
 
@@ -243,24 +248,168 @@ func cloneImage(i *Image) *Image {
 }
 
 //template concatenator kind of
-var templates = template.Must(template.ParseFiles("edit.html", "pups.html"))
+var templates = template.Must(
+	template.ParseFiles(viewsPath + "pups.html",viewsPath + "login.html",viewsPath + "home.html"))
 
 
+//login users
+var cookieHandler = securecookie.New(
+    securecookie.GenerateRandomKey(64),
+    securecookie.GenerateRandomKey(32))
+
+const indexPage = `
+ <h1>Login</h1>
+ <form method="post" action="/login">
+     <label for="name">User name</label>
+     <input type="text" id="name" name="name">
+     <label for="password">Password</label>
+     <input type="password" id="password" name="password">
+     <button type="submit">Login</button>
+ </form>
+ `
+ 
+func indexPageHandler(response http.ResponseWriter, request *http.Request) {
+	userName := getUserName(request)
+	//fmt.Printf("username/email->%s\n",userName)
+    if userName != "" {
+        //fmt.Fprintf(response, internalPage, userName)
+        //fmt.Println("home page")
+        templates.ExecuteTemplate(response,"home.html",userName)
+    } else {
+    	//fmt.Println("login test")
+        //fmt.Fprintf(response, indexPage)
+        //fmt.Println("login page")
+        templates.ExecuteTemplate(response,"login.html","")
+    }
+ }
+ 
+ const internalPage = `
+ <h1>Internal</h1>
+ <hr>
+ <small>User: %s</small>
+ <form method="post" action="/logout">
+     <button type="submit">Logout</button>
+ </form>
+ `
+ 
+func internalPageHandler(response http.ResponseWriter, request *http.Request) {
+	userName := getUserName(request)
+	if userName != "" {
+		fmt.Fprintf(response, internalPage, userName)
+	} else {
+		//fmt.Println("qwerty")
+		http.Redirect(response, request, "/", 302)
+	}
+}
+
+
+func loginHandler(response http.ResponseWriter, request *http.Request) {
+     name := request.FormValue("email")
+     pass := request.FormValue("password")
+     //fmt.Printf("Logged in %s %s \n",name,pass);
+     redirectTarget := "/"
+     if name != "" && pass != "" {
+         // .. check credentials ..
+         setSession(name, response)
+         redirectTarget = "/"
+         //fmt.Printf("Logged in %s \n",name);
+     }
+     http.Redirect(response, request, redirectTarget, 302)
+ }
+ 
+ func logoutHandler(response http.ResponseWriter, request *http.Request) {
+     clearSession(response)
+     http.Redirect(response, request, "/", 302)
+ }
+
+func setSession(userName string, response http.ResponseWriter) {
+     value := map[string]string{
+         "name": userName,
+     }
+     if encoded, err := cookieHandler.Encode("session", value); err == nil {
+         cookie := &http.Cookie{
+             Name:  "session",
+             Value: encoded,
+             Path:  "/",
+         }
+         http.SetCookie(response, cookie)
+         //fmt.Println("set session");
+     } else{
+     	fmt.Println("set session panic")
+     }
+ }
+ 
+ func getUserName(request *http.Request) (userName string) {
+     if cookie, err := request.Cookie("session"); err == nil {
+         cookieValue := make(map[string]string)
+         if err = cookieHandler.Decode("session", cookie.Value, &cookieValue); err == nil {
+             userName = cookieValue["name"]
+             //fmt.Println("cookie handler")
+         }
+     }
+     //fmt.Println("getUserName")
+     return userName
+ }
+ 
+ func clearSession(response http.ResponseWriter) {
+     cookie := &http.Cookie{
+         Name:   "session",
+         Value:  "",
+         Path:   "/",
+         MaxAge: -1,
+     }
+     http.SetCookie(response, cookie)
+ }
 func main(){
+	
+	r := mux.NewRouter().StrictSlash(false)
+	
+	r.HandleFunc("/", indexPageHandler)
+    //r.HandleFunc("/internal", internalPageHandler)
+	r.HandleFunc("/login",loginHandler).Methods("POST")
+	r.HandleFunc("/logout",logoutHandler).Methods("POST")
+	/*
+	//This would look for env variables first STORMPATH_API_KEY_ID and STORMPATH_API_KEY_SECRET if empty
+	//then it would look for os.Getenv("HOME") + "/.config/stormpath/apiKey.properties" for the credentials
+	credentials, _ := stormpath.NewDefaultCredentials()
+
+	//Init Whithout cache
+	stormpath.Init(credentials, nil)
+
+	//Get the current tenant
+	tenant, _ := stormpath.CurrentTenant()
+
+	//Get the tenat applications
+	apps, _ := tenant.GetApplications(stormpath.NewDefaultPageRequest(), stormpath.NewEmptyFilter())
+
+	//Get the first application
+	app := apps.Items[0]
+
+	accountDetails := r.HandlerFunc(userAuth)
+
+	//Authenticate a user against the app
+	accountRef, _ := app.AuthenticateAccount(accountDetails.Email, accountDetails.Password)
+
+	//Print the account information
+	account, _ := accountRef.GetAccount()
+	fmt.Println(account)
+
+	*/
+
+
+
 	imageManager := NewImageManager()
 	dbError := imageManager.InitDB(false)
 
 	defer imageManager.GetDB().Close()
 
 	if dbError != nil {
-		log.Printf("%q\n", dbError)
+		log.Printf("dbError -> %q\n", dbError)
 		return
 	} else {
 		imageManager.CreateTables()
 	}
 
-	r := mux.NewRouter().StrictSlash(false)
-	
 	pups := r.Path(PathPrefix).Subrouter()
 	pups.Methods("GET").HandlerFunc(ListPuppies)
 

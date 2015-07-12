@@ -2,8 +2,9 @@
   "name": "CutePuppiesApp",
   "version": "1.0.0",
   "description": "Simple photo fetching app with Aye and Nay",
+  "main":"app.js",
   "scripts": {
-    "start":"app.js"
+    "start": "appLogin.js"
   },
   "keywords": [
     "cute puppies",
@@ -13,7 +14,13 @@
   "author": "Phanindra Pydisetty",
   "license": "MIT",
   "dependencies": {
-    "http-server": "^0.6.1"
+    "csurf": "^1.8.3",
+    "express": "^4.13.1",
+    "express-stormpath": "^1.0.5",
+    "forms": "^1.1.1",
+    "http-server": "^0.6.1",
+    "jade": "^1.11.0",
+    "xtend": "^4.0.0"
   },
   "repository": {
     "type": "git",

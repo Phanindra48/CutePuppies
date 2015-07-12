@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<!--<html>
+    <head>
+        <meta charset="UTF-8">
+        <title> All the cuteness in the world </title>
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    </head>
+
+    <body class="container">
+        <a href="#/">All the puppies</a>
+        <a href="#/top">Most voted puppies from the app</a>
+        <div></div>
+    </body>
+</html>-->
+<html>
+<head>
+<style type="text/css">
+    html {
+        height: 100%;
+        font-weight: 400;
+        font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+        font-size: 15px;
+        line-height: 1.4;
+    }
+    .logged_out_page_big_signup {
+        overflow-y: hidden;
+        background-image: linear-gradient(-180deg,#fff 0,#f1f1f1 100%);
+    }
+    .bg_container {
+        position: absolute;
+        overflow: hidden;
+        height: 100%;
+        width: 100%;
+    }
+    .bg_image{
+        background: url(//qsf.is.quoracdn.net/-2f32a993187981f4.png);
+        background-size: 1757px 845px;
+        height: 1191px;
+        width: 1884px;
+        background-repeat: no-repeat;
+        background-position: center top;
+        position: absolute;
+        left: 50%;
+        margin-left: -942px;
+        opacity: .8;
+    }
+    .container {
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+        width: 100%;
+        padding: 22px;
+        border-radius: 3px;
+        background: #fff;
+        border: 1px solid #dcdcdc;
+        box-shadow: 0 2px 4px 0 #dcdcdc;
+        margin-top: 0;
+    }
+    .logo {
+        float: none;
+        margin: auto;
+        width: 160px;
+        height: 100px;
+        background-size: 160px 45px;
+        background-image: url(//qsf.is.quoracdn.net/-6b3c63e23a5ee226.svg);
+        background-repeat: no-repeat;
+        background-position: center center;
+        height: 56px;
+    }
+    .tagline {
+        float: none;
+        text-align: center;
+        margin-left: 16px;
+        margin-top: 10px;
+        margin-bottom: 16px;
+        font-size: 19px;
+        line-height: 1.3;
+        color: rgba(175,175,175,0.95);
+        -webkit-font-smoothing: antialiased;
+    }
+    .HomeLoggedOutBigSignup {
+        width: 640px;
+        height: 400px;
+        position: absolute;
+        top: 10%;
+        bottom: initial;
+        left: 0;
+        right: 0;
+        margin: auto;
+    }
+
+
+    @charset "utf-8";
+    /* CSS Document */
+
+    /* ---------- FONTAWESOME ---------- */
+    /* ---------- http://fortawesome.github.com/Font-Awesome/ ---------- */
+    /* ---------- http://weloveiconfonts.com/ ---------- */
+
+    @import url(http://weloveiconfonts.com/api/?family=fontawesome);
+
+    /* ---------- ERIC MEYER'S RESET CSS ---------- */
+    /* ---------- http://meyerweb.com/eric/tools/css/reset/ ---------- */
+
+    @import url(http://meyerweb.com/eric/tools/css/reset/reset.css);
+
+    /* ---------- FONTAWESOME ---------- */
+
+    [class*="fontawesome-"]:before {
+      font-family: 'FontAwesome', sans-serif;
+    }
+
+    /* ---------- GENERAL ---------- */
+
+    body {
+        background-color: #C0C0C0;
+        color: #000;
+        font-family: "Varela Round", Arial, Helvetica, sans-serif;
+        font-size: 16px;
+        line-height: 1.5em;
+    }
+
+    input {
+        border: none;
+        font-family: inherit;
+        font-size: inherit;
+        font-weight: inherit;
+        line-height: inherit;
+        -webkit-appearance: none;
+    }
+
+    /* ---------- LOGIN ---------- */
+
+    #login {
+        margin: 50px auto;
+        width: 400px;
+    }
+
+    #login h2 {
+        background-color: #f95252;
+        -webkit-border-radius: 20px 20px 0 0;
+        -moz-border-radius: 20px 20px 0 0;
+        border-radius: 20px 20px 0 0;
+        color: #fff;
+        font-size: 28px;
+        padding: 20px 26px;
+    }
+
+    #login h2 span[class*="fontawesome-"] {
+        margin-right: 14px;
+    }
+
+    #login fieldset {
+        background-color: #fff;
+        -webkit-border-radius: 0 0 20px 20px;
+        -moz-border-radius: 0 0 20px 20px;
+        border-radius: 0 0 20px 20px;
+        padding: 20px 26px;
+    }
+
+    #login fieldset p {
+        color: #777;
+        margin-bottom: 14px;
+    }
+
+    #login fieldset p:last-child {
+        margin-bottom: 0;
+    }
+
+    #login fieldset input {
+        -webkit-border-radius: 3px;
+        -moz-border-radius: 3px;
+        border-radius: 3px;
+    }
+
+    #login fieldset input[type="email"], #login fieldset input[type="password"] {
+        background-color: #eee;
+        color: #777;
+        padding: 4px 10px;
+        width: 328px;
+    }
+
+    #login fieldset input[type="submit"] {
+        background-color: #33cc77;
+        color: #fff;
+        display: block;
+        margin: 0 auto;
+        padding: 4px 0;
+        width: 100px;
+    }
+
+    #login fieldset input[type="submit"]:hover {
+        background-color: #28ad63;
+    }
+</style>
+<link href="./css/bootstrap.css" rel="stylesheet">
+<title instart_patch_id="13">Cute Puppies - On place for all the adorable puppies in the world</title>
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Varela+Round">
+
+    <!--[if lt IE 9]>
+        <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+</head>
+
+<body class="logged_out_page_big_signup">
+    <div class="ContentWrapper">
+        <div class="bg_container">
+            <div class="bg_image"></div>
+        </div>
+        <div class="HomeLoggedOutBigSignup">
+            <div class="logo"></div>
+            <div class="tagline"><h2>The best place to find adorable puppies</h2></div>
+            <div class="container">
+                <div id="login">
+
+                    <h2><span class="fontawesome-lock"></span>Sign In</h2>
+
+                    <form action="/login" method="POST">
+
+                        <fieldset>
+
+                            <p><label for="email">E-mail address</label></p>
+                            <p><input type="email" id="email" name="email" value="mail@address.com" onBlur="if(this.value=='')this.value='mail@address.com'" onFocus="if(this.value=='mail@address.com')this.value=''"></p> <!-- JS because of IE support; better: placeholder="mail@address.com" -->
+
+                            <p><label for="password">Password</label></p>
+                            <p><input type="password" id="password" name="password" value="password" onBlur="if(this.value=='')this.value='password'" onFocus="if(this.value=='password')this.value=''"></p> <!-- JS because of IE support; better: placeholder="password" -->
+
+                            <p>
+                                <button type="submit" class="btn btn-default" value="Sign In">Sign In</button>
+                            </p>
+
+                        </fieldset>
+
+                    </form>
+                </div> <!-- end login -->
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+
+
