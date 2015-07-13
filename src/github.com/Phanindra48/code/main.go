@@ -11,8 +11,10 @@ import(
 	"log"
 	"io/ioutil"
 	"html/template"
-	"strconv"
+	//"strconv"
 	//"github.com/jarias/stormpath-sdk-go"
+	//"strings"
+	"os"
 	"github.com/gorilla/securecookie"
 )
 
@@ -61,8 +63,9 @@ type Photo struct {
 }
 
 type Vote struct {
-	ID string `json:"id"`
-	VT bool   `json:"vt"`
+	ID int   `json:"id"`
+	VT int   `json:"vt"`
+	UID int  `json:"uid"`
 }
 // Returns the URL to this photo in the specified size.
 func (p *Photo) URL(size string) string {
@@ -216,9 +219,15 @@ func ListPuppies(w http.ResponseWriter, r *http.Request) {
 
 func UpdatePuppy(w http.ResponseWriter, r *http.Request) {
 	var v Vote
-	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
-		println("Error while decoding Vote object")
-	}
+    contents, err := ioutil.ReadAll(r.Body)
+    if err != nil {
+        fmt.Printf("%s", err)
+        os.Exit(1)
+    }
+    fmt.Printf("%s\n", string(contents))
+    jsonStr := string(contents)
+    json.Unmarshal([]byte(jsonStr),&v)
+    //fmt.Printf("update puppy photo id %d,vote %v\n",v.ID,v.VT)
 
 	imageManager := NewImageManager()
 
@@ -229,8 +238,10 @@ func UpdatePuppy(w http.ResponseWriter, r *http.Request) {
 	}
 
 	defer imageManager.GetDB().Close()
-	id, err := strconv.Atoi(v.ID)
-	imageManager.UpdateVotes(id, v.VT)
+	//id, err := strconv.Atoi(v.ID)
+	choice := v.VT == 1
+	fmt.Printf("update puppy photo id %d,vote %v,uid: %d\n",v.ID,v.VT,v.UID)
+	imageManager.UpdateVotes(v.ID, choice,v.UID)
 
 	response, err := json.Marshal(v)
 
@@ -256,103 +267,88 @@ var templates = template.Must(
 var cookieHandler = securecookie.New(
     securecookie.GenerateRandomKey(64),
     securecookie.GenerateRandomKey(32))
-
-const indexPage = `
- <h1>Login</h1>
- <form method="post" action="/login">
-     <label for="name">User name</label>
-     <input type="text" id="name" name="name">
-     <label for="password">Password</label>
-     <input type="password" id="password" name="password">
-     <button type="submit">Login</button>
- </form>
- `
  
 func indexPageHandler(response http.ResponseWriter, request *http.Request) {
-	userName := getUserName(request)
-	//fmt.Printf("username/email->%s\n",userName)
-    if userName != "" {
-        //fmt.Fprintf(response, internalPage, userName)
-        //fmt.Println("home page")
-        templates.ExecuteTemplate(response,"home.html",userName)
-    } else {
-    	//fmt.Println("login test")
-        //fmt.Fprintf(response, indexPage)
-        //fmt.Println("login page")
-        templates.ExecuteTemplate(response,"login.html","")
-    }
- }
- 
- const internalPage = `
- <h1>Internal</h1>
- <hr>
- <small>User: %s</small>
- <form method="post" action="/logout">
-     <button type="submit">Logout</button>
- </form>
- `
- 
-func internalPageHandler(response http.ResponseWriter, request *http.Request) {
-	userName := getUserName(request)
-	if userName != "" {
-		fmt.Fprintf(response, internalPage, userName)
+	userName,userId := getUserName(request)
+	//userName := "werew"
+	if userName != "" && userId > 0 {
+	    //fmt.Fprintf(response, internalPage, userName)
+	    templates.ExecuteTemplate(response,"home.html",userId)
 	} else {
-		//fmt.Println("qwerty")
-		http.Redirect(response, request, "/", 302)
+	    templates.ExecuteTemplate(response,"login.html","")
 	}
 }
+/*
+func signupHandler(response http.ResponseWriter, request *http.Request){
+	email := request.FormValue("email")
+	pass := request.FormValue("password")
+	username := request.FormValue("username")
 
-
+}
+*/
 func loginHandler(response http.ResponseWriter, request *http.Request) {
-     name := request.FormValue("email")
-     pass := request.FormValue("password")
-     //fmt.Printf("Logged in %s %s \n",name,pass);
-     redirectTarget := "/"
-     if name != "" && pass != "" {
-         // .. check credentials ..
-         setSession(name, response)
-         redirectTarget = "/"
-         //fmt.Printf("Logged in %s \n",name);
-     }
-     http.Redirect(response, request, redirectTarget, 302)
- }
+	name := request.FormValue("email")
+	pass := request.FormValue("password")
+	//fmt.Printf("Logged in %s %s \n",name,pass);
+	redirectTarget := "/"
+	if name != "" && pass != "" {
+	    // .. check credentials ..
+	    setSession(name, response)
+	    redirectTarget = "/"
+	    //fmt.Printf("Logged in %s \n",name);
+	}
+	http.Redirect(response, request, redirectTarget, 302)
+}
  
- func logoutHandler(response http.ResponseWriter, request *http.Request) {
+func logoutHandler(response http.ResponseWriter, request *http.Request) {
  	fmt.Printf("logout \n")
-     clearSession(response)
-     http.Redirect(response, request, "/", 302)
+    clearSession(response)
+    http.Redirect(response, request, "/", 302)
  }
 
 func setSession(userName string, response http.ResponseWriter) {
-     value := map[string]string{
+    value := map[string]string{
          "name": userName,
-     }
-     if encoded, err := cookieHandler.Encode("session", value); err == nil {
-         cookie := &http.Cookie{
-             Name:  "session",
-             Value: encoded,
-             Path:  "/",
-         }
-         http.SetCookie(response, cookie)
-         //fmt.Println("set session");
-     } else{
+    }
+    if encoded, err := cookieHandler.Encode("session", value); err == nil {
+        cookie := &http.Cookie{
+            Name:  "session",
+            Value: encoded,
+            Path:  "/",
+        }
+        http.SetCookie(response, cookie)
+        insertUser(userName)
+        fmt.Println("set session");
+    } else{
      	fmt.Println("set session panic")
-     }
+    }
  }
  
- func getUserName(request *http.Request) (userName string) {
-     if cookie, err := request.Cookie("session"); err == nil {
-         cookieValue := make(map[string]string)
-         if err = cookieHandler.Decode("session", cookie.Value, &cookieValue); err == nil {
-             userName = cookieValue["name"]
-             //fmt.Println("cookie handler")
-         }
-     }
-     //fmt.Println("getUserName")
-     return userName
- }
- 
- func clearSession(response http.ResponseWriter) {
+func getUserName(request *http.Request) (userName string,user_id int) {
+    if cookie, err := request.Cookie("session"); err == nil {
+        cookieValue := make(map[string]string)
+        if err = cookieHandler.Decode("session", cookie.Value, &cookieValue); err == nil {
+            userName = cookieValue["name"]
+            //fmt.Println("cookie handler")
+        }
+    }
+    fmt.Println("getUserName")
+    imageManager := NewImageManager()
+    dbError := imageManager.InitDB(false)
+	if dbError != nil {
+		log.Fatal(dbError)
+
+	}
+	defer imageManager.GetDB().Close()
+    if len(userName) > 0 {
+    	user_id = imageManager.getUser(userName)
+    	fmt.Printf("getUsername method - user id %d\n",user_id)
+	}
+    
+    return userName,user_id
+}
+
+func clearSession(response http.ResponseWriter) {
      cookie := &http.Cookie{
          Name:   "session",
          Value:  "",
@@ -360,44 +356,29 @@ func setSession(userName string, response http.ResponseWriter) {
          MaxAge: -1,
      }
      http.SetCookie(response, cookie)
- }
+}
+
+
+func insertUser(username string) {
+	imageManager := NewImageManager()
+
+	dbError := imageManager.InitDB(false)
+	if dbError != nil {
+		log.Printf("dbError -> %q\n", dbError)
+		return
+	}
+
+	defer imageManager.GetDB().Close()
+	imageManager.InsertUser(username)
+}
+
 func main(){
 	
 	r := mux.NewRouter().StrictSlash(false)
 	
 	r.HandleFunc("/", indexPageHandler)
-    //r.HandleFunc("/internal", internalPageHandler)
 	r.HandleFunc("/login",loginHandler).Methods("POST")
 	r.HandleFunc("/logout",logoutHandler).Methods("POST")
-	/*
-	//This would look for env variables first STORMPATH_API_KEY_ID and STORMPATH_API_KEY_SECRET if empty
-	//then it would look for os.Getenv("HOME") + "/.config/stormpath/apiKey.properties" for the credentials
-	credentials, _ := stormpath.NewDefaultCredentials()
-
-	//Init Whithout cache
-	stormpath.Init(credentials, nil)
-
-	//Get the current tenant
-	tenant, _ := stormpath.CurrentTenant()
-
-	//Get the tenat applications
-	apps, _ := tenant.GetApplications(stormpath.NewDefaultPageRequest(), stormpath.NewEmptyFilter())
-
-	//Get the first application
-	app := apps.Items[0]
-
-	accountDetails := r.HandlerFunc(userAuth)
-
-	//Authenticate a user against the app
-	accountRef, _ := app.AuthenticateAccount(accountDetails.Email, accountDetails.Password)
-
-	//Print the account information
-	account, _ := accountRef.GetAccount()
-	fmt.Println(account)
-
-	*/
-
-
 
 	imageManager := NewImageManager()
 	dbError := imageManager.InitDB(false)
@@ -410,13 +391,13 @@ func main(){
 	} else {
 		imageManager.CreateTables()
 	}
-
+	fmt.Printf("fine so far\n")
 	pups := r.Path(PathPrefix).Subrouter()
 	pups.Methods("GET").HandlerFunc(ListPuppies)
 
 	//update puppy likes/dislikes
 	pupsUpdate := r.Path(PathPrefix).Subrouter()
-	pupsUpdate.Methods("PUT").HandlerFunc(UpdatePuppy)
+	pupsUpdate.Methods("POST").HandlerFunc(UpdatePuppy)
 
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("../../../content/")))
 	http.Handle("/", r)

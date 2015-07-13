@@ -8,30 +8,46 @@ cutePuppies = (function(){
   var globals = {
     upvotes:[],
     downvotes:[],
-    currentPage:"1"
+    currentPage:"1",
+    user_id:0
   }
   var functions = {
     init:function(){
-      $('.puppyLike').off().on('click',function(){
-        functions.like();
-      });
-
-      $('.puppyDisLike').off().on('click',function(){
-        functions.dislike();
-      });
-
-      $('.puppy').off().on('click',function(){
-        functions.enlargeImage();
-      });
-
       $('.allPuppies').off().on('click',function(){
         functions.getAllPuppies();
       });
-
+      globals.user_id = $('#user_id').val();
       $('.appLogout').off().on('click',function(){
         $.post('/logout',function(data){
           window.location.href = '/'
         });
+      });
+      functions.getAllPuppies();
+    },
+    bindButtons:function(){
+      /*
+      $('.page-content').off().on('click','.puppyLike',function(e){
+        functions.like();
+      });
+
+      $('.page-content').off().on('click','a.puppyDisLike',function(e){
+        functions.dislike();
+      });
+
+      $('.page-content').off().on('click','a.puppy',function(e){
+        functions.enlargeImage();
+      });
+      */
+      $('.puppyLike').off().on('click',function(e){
+        functions.like();
+      });
+
+      $('.puppyDisLike').off().on('click',function(e){
+        functions.dislike();
+      });
+
+      $('.puppy').off().on('click',function(e){
+        functions.enlargeImage();
       });
 
     },
@@ -56,6 +72,7 @@ cutePuppies = (function(){
         }
         else{
           $('.page-content').append(data);
+          functions.bindButtons();
         }
         })
         .fail(function (jqXHR, textStatus, errorThrown) {
@@ -77,10 +94,10 @@ cutePuppies = (function(){
         vote.ID = puppyId;
         vote.VT = true;
 
-        puppyFactory.votePuppy(vote);
+        puppyFactory.votePuppy(puppyId,1,globals.user_id);
       }
     },
-    dislike:function(){
+    dislike:function() {
       var dislikeButton = $(event.target);
       var puppyId = dislikeButton.data('puppy-id');
       var alreadyLiked = globals.upvotes.indexOf(puppyId);
@@ -91,11 +108,7 @@ cutePuppies = (function(){
         dislikeButton.find('span#dislikes').text(++likes);
         if(!dislikeButton.hasClass('disabled'))
           dislikeButton.addClass('disabled');
-        var vote = {};
-        vote.ID = puppyId;
-        vote.VT = true;
-
-        puppyFactory.votePuppy(vote);
+        puppyFactory.votePuppy(puppyId,0,globals.user_id);
       }
     },
     enlargeImage: function(){
@@ -112,10 +125,19 @@ var puppyFactory = puppyFactory || {};
 puppyFactory = (function(){
   var puppyUrlBase = '/pups';
   var factory = {
-    votePuppy: function(vote){
+    votePuppy: function(id,choice,uid){
+      console.log(id,choice,uid);
+      var vote = {};
+      vote.ID = id;
+      vote.VT = choice;
+      vote.UID = parseInt(uid);
+      var data = JSON.stringify(vote);
+      console.log(data);
       $.ajax({
         url: puppyUrlBase,
-        type: 'PUT',
+        contentType: "application/json; charset=utf-8",
+        data:data,
+        type: 'post',
         success: function(result) {
           // Do something with the result
           console.log('test');

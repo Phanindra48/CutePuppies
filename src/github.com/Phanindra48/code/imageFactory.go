@@ -48,10 +48,12 @@ func (m *ImageManager) NewImage(photo Photo) *Image {
 	return &Image{photo.ID, photo.Title, photo.URL(SizeThumbnail), photo.URL(SizeMedium640), 0, 0}
 }
 
-func (m *ImageManager) UpdateVotes(puppy_id int, up_vote bool) {
+func (m *ImageManager) UpdateVotes(puppy_id int, up_vote bool,user_id int) {
+	var choice = 0
 	sqlStmt := "update votes set "
 	if up_vote == true {
 		sqlStmt += " up_votes = up_votes + 1"
+		choice = 1
 	} else {
 		sqlStmt += " down_votes = down_votes + 1"
 	}
@@ -70,6 +72,23 @@ func (m *ImageManager) UpdateVotes(puppy_id int, up_vote bool) {
 	affect, _ := res.RowsAffected()
 
 	fmt.Println(affect)
+	fmt.Printf("update votes puppy_id: %d,up_vote: %v,uer_id: %d\n",puppy_id, choice,user_id)
+
+	//insert user votes 
+	sqlStmt = "INSERT OR REPLACE INTO uservotes (user_id,puppy_id,choice) VALUES (?,?,?)"
+
+	stmt, err = m.db.Prepare(sqlStmt)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer stmt.Close()
+
+	res, _ = stmt.Exec(user_id,puppy_id, choice)
+	affect, _ = res.RowsAffected()
+
+	fmt.Printf("inserted rows %d\n",affect)
+
 
 	return
 }
@@ -94,6 +113,7 @@ func (m *ImageManager) GetDB() *sql.DB {
 }
 
 func (m *ImageManager) CreateTables() {
+	fmt.Printf("create tables\n")
 	createSqlStmt := `
 	create table if not exists votes (id integer not null primary key, puppy_id integer unique, title string, thumbnail string, large string, up_votes integer, down_votes integer);
 	delete from votes;
@@ -102,6 +122,26 @@ func (m *ImageManager) CreateTables() {
 	if err != nil {
 		log.Printf("%q: %s\n", err, createSqlStmt)
 	}
+
+	createUserTable := `
+	create table if not exists users (user_id integer not null primary key,username string);
+	delete from users;
+	`
+	_, user_err := m.db.Exec(createUserTable)
+	if user_err != nil {
+		log.Printf("%q: %s\n", user_err, createUserTable)
+	}
+	//	CREATE TABLE tblData (qid TEXT, anid INTEGER, value INTEGER, PRIMARY KEY(qid, anid))
+	//CREATE UNIQUE INDEX vote_index on uservotes(user_id,puppy_id,choice);
+	createUserVotesTable := `
+	create table if not exists uservotes (user_id integer not null,puppy_id integer,choice int,PRIMARY KEY(user_id, puppy_id));
+	delete from uservotes;
+	`
+	_, uservotes_err := m.db.Exec(createUserVotesTable)
+	if uservotes_err != nil {
+		log.Printf("%q: %s\n", uservotes_err, createUserVotesTable)
+	}
+
 }
 
 func (m *ImageManager) InsertPuppies(images []*Image) {
@@ -126,6 +166,48 @@ func (m *ImageManager) InsertPuppies(images []*Image) {
 
 	tx.Commit()
 }
+
+func (m *ImageManager) InsertUser(username string) {
+	sqlStmt := "insert into users(username) select ? where not exists(select 1 from users where username = ?)"
+
+	stmt, err := m.db.Prepare(sqlStmt)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer stmt.Close()
+
+	res, _ := stmt.Exec(username,username)
+	affect, _ := res.RowsAffected()
+
+	fmt.Printf("inserted rows %d\n",affect)
+}
+
+func (m *ImageManager) getUser(username string) int{
+
+	if len(username) > 0 {
+		
+		sql := fmt.Sprintf("select user_id from users where username = '%s' LIMIT 1",username)
+		fmt.Printf("sql -> %s \n",sql)
+		rows, err := m.db.Query(sql)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		defer rows.Close()
+		var user_id int
+		for rows.Next() {
+			rows.Scan(&user_id)
+		}
+
+		fmt.Printf("user %s id %v\n",username,user_id)
+
+		return user_id
+	} else {
+		return 0
+	}
+}
+
 
 func (m *ImageManager) FindOldPuppies(ids []string) []*Image {
 
