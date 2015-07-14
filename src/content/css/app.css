@@ -21,7 +21,8 @@ a:hover {
 }
 .header .site-nav__home
 {
-    background: url(http://img5a.flixcart.com/www/promos/new/20150521-151534-flipkart-logo.png);
+    /*background: url(http://img5a.flixcart.com/www/promos/new/20150521-151534-flipkart-logo.png);*/
+    background: url(../images/logo2.png);
     background-size: cover;
     display: block;
     float: left;
@@ -53,8 +54,8 @@ a:hover {
 {
     .header .site-nav__home
     {
-        height: 3.4375em;
-        width: 13.5em;
+        height: 57px;
+        width: 41px;
     }
 }
 .svg .header .site-nav__home
@@ -90,7 +91,7 @@ a:hover {
 {
     .header
     {
-        padding: 1.875em 0;
+        padding: 0.875em 0;
     }
 }
 header .giga,.article header .giga
