@@ -34,6 +34,7 @@ const (
 	FlickrQuery    = "flickr.photos.search"
 	FlickrKey      = "60c30ef17e8d7721d395b8f158b1709f"
 	PathPrefix     = "/pups"
+	UpdatePups	   = "/updatevotes"
 	TopPupsPrefix  = "/top"
 	viewsPath	   = "../../../content/views/"
 )
@@ -89,6 +90,7 @@ type Image struct {
 	Large     string `json:"large"`
 	UpVotes   int    `json:"upvotes"`
 	DownVotes int    `json:"downvotes"`
+	UserChoice int   `json:"userchoice"`
 }
 
 type PuppiesResponse struct {
@@ -99,11 +101,25 @@ type PuppiesResponse struct {
 	Images  []*Image `json:"images"`
 }
 
+type params struct {
+	page string `json:"page"`
+	uid int `json:"uid"`
+}
+
 func ListPuppies(w http.ResponseWriter, r *http.Request) {
-	page := mux.Vars(r)["page"]
-	if page == "" {
-		page = "1"
-		fmt.Printf("page ID -> %s \n",page)
+	var t params
+    contents, err := ioutil.ReadAll(r.Body)
+    if err != nil {
+        fmt.Printf("%s", err)
+        os.Exit(1)
+    }
+    fmt.Printf("%s\n", string(contents))
+    jsonStr := string(contents)
+    json.Unmarshal([]byte(jsonStr),&t)
+
+    fmt.Printf("page ID -> %s uid-> %d \n",t.page,t.uid)
+	if t.page == "" {
+		t.page = "1"
 	}
 	tags := "puppy,dogs,dog,cute,pugs"
 
@@ -114,7 +130,7 @@ func ListPuppies(w http.ResponseWriter, r *http.Request) {
 	params.Add("api_key", FlickrKey)
 	params.Add("tags", tags)
 	params.Add("per_page", "20")
-	params.Add("page", page)
+	params.Add("page", t.page)
 	params.Add("safe_search", "2")
 	params.Add("group_id","603018@N22")
 	params.Add("sort", "date-posted-asc")
@@ -169,7 +185,7 @@ func ListPuppies(w http.ResponseWriter, r *http.Request) {
 
 	all := imageManager.All()
 
-	dbPuppies := imageManager.FindOldPuppies(tempIDs)
+	dbPuppies := imageManager.FindOldPuppies(tempIDs,t.uid)
 
 	var newPuppies []*Image
 
@@ -391,12 +407,11 @@ func main(){
 	} else {
 		imageManager.CreateTables()
 	}
-	fmt.Printf("fine so far\n")
 	pups := r.Path(PathPrefix).Subrouter()
-	pups.Methods("GET").HandlerFunc(ListPuppies)
+	pups.Methods("POST").HandlerFunc(ListPuppies)
 
 	//update puppy likes/dislikes
-	pupsUpdate := r.Path(PathPrefix).Subrouter()
+	pupsUpdate := r.Path(UpdatePups).Subrouter()
 	pupsUpdate.Methods("POST").HandlerFunc(UpdatePuppy)
 
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("../../../content/")))

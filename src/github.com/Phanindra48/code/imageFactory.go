@@ -45,7 +45,7 @@ func (m *ImageManager) Save(image *Image) error {
 }
 
 func (m *ImageManager) NewImage(photo Photo) *Image {
-	return &Image{photo.ID, photo.Title, photo.URL(SizeThumbnail), photo.URL(SizeMedium640), 0, 0}
+	return &Image{photo.ID, photo.Title, photo.URL(SizeThumbnail), photo.URL(SizeMedium640), 0, 0, 2}
 }
 
 func (m *ImageManager) UpdateVotes(puppy_id int, up_vote bool,user_id int) {
@@ -209,19 +209,23 @@ func (m *ImageManager) getUser(username string) int{
 }
 
 
-func (m *ImageManager) FindOldPuppies(ids []string) []*Image {
+func (m *ImageManager) FindOldPuppies(ids []string,uid int) []*Image {
 
 	//sqlStmt = "select * from votes where puppy_id in (?" + strings.Repeat(",?", len(ids)-1) + ")"
 
-	query := fmt.Sprintf("select * from votes where puppy_id in (%s)",
+	query := fmt.Sprintf("select v.*,coalesce(uv.choice,2) as choice" +
+		" from votes v left join uservotes uv on uv.puppy_id = v.puppy_id and uv.user_id = ?" +
+		" where v.puppy_id in (%s)",
 		strings.Join(strings.Split(strings.Repeat("?", len(ids)), ""), ","))
-
+	fmt.Println("query")
 	stmt, err := m.db.Prepare(query)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	var params []interface{}
+	//append user id first
+	params = append(params, uid)
 	for _, id := range ids {
 		params = append(params, id)
 	}
@@ -238,7 +242,7 @@ func (m *ImageManager) FindOldPuppies(ids []string) []*Image {
 	for rows.Next() {
 		var dbImage Image
 		var id int
-		rows.Scan(&id, &dbImage.ID, &dbImage.Title, &dbImage.Thumbnail, &dbImage.Large, &dbImage.UpVotes, &dbImage.DownVotes)
+		rows.Scan(&id, &dbImage.ID, &dbImage.Title, &dbImage.Thumbnail, &dbImage.Large, &dbImage.UpVotes, &dbImage.DownVotes, &dbImage.UserChoice)
 		rs = append(rs, &dbImage)
 	}
 

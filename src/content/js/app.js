@@ -52,13 +52,17 @@ cutePuppies = (function(){
 
     },
     getAllPuppies:function(){
+      var params = {
+          "page" : '1',
+          "uid": parseInt(globals.user_id)
+        };
+      var jsonStr = JSON.stringify(params)
+      console.log(jsonStr);
       $.ajax({
+        contentType: "application/json; charset=utf-8",
+        type: 'post',
         url: '/pups',
-        type: 'GET',
-        //dataType: "json",
-        data:JSON.stringify({
-          page : '1'
-        })
+        data:jsonStr,
       })
       .done(function (data, textStatus, jqXHR) {
         var obj;
@@ -77,6 +81,32 @@ cutePuppies = (function(){
         })
         .fail(function (jqXHR, textStatus, errorThrown) {
             alert('getAllPuppies -> ' + errorThrown);
+        });
+    },
+    getTopPuppies:function(){
+      var jsonStr = JSON.stringify(params)
+      console.log(jsonStr);
+      $.ajax({
+        type: 'get',
+        url: '/top'
+      })
+      .done(function (data, textStatus, jqXHR) {
+        var obj;
+        try {
+            obj = JSON.parse(data);
+        } catch (e) {
+            obj = data;
+        }
+        if (typeof obj.Error != 'undefined' && obj.Error != '') {
+          alert(obj.Error);
+        }
+        else{
+          $('.page-content').append(data);
+          functions.bindButtons();
+        }
+        })
+        .fail(function (jqXHR, textStatus, errorThrown) {
+            alert('Top puppies -> ' + errorThrown);
         });
     },
     like:function(){
@@ -123,7 +153,7 @@ cutePuppies = (function(){
 
 var puppyFactory = puppyFactory || {};
 puppyFactory = (function(){
-  var puppyUrlBase = '/pups';
+  var puppyUrlBase = '/updatevotes';
   var factory = {
     votePuppy: function(id,choice,uid){
       console.log(id,choice,uid);
