@@ -110,6 +110,7 @@ cutePuppies = (function(){
         }
         else{
           $('.page-content').html(data);
+          $('html, body').animate({scrollTop: '0px'}, 300);
           functions.bindButtons();
         }
         })
