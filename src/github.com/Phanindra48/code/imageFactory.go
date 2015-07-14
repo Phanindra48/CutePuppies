@@ -44,6 +44,60 @@ func (m *ImageManager) Save(image *Image) error {
 	return nil
 }
 
+func (m *ImageManager) GetPuppiesCount() int {
+	query := "select count(id) from votes"
+
+	rows, err := m.db.Query(query)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	count := 0
+	for rows.Next() {
+		rows.Scan(&count)
+	}
+
+	return count
+}
+
+func (m *ImageManager) GetPuppiesByMostVotes(pageId int,uid int) []*Image {
+	perPage := 20
+	if pageId != 0 {
+		pageId-- 
+	}
+	start := perPage * pageId
+	query := "select v.*,coalesce(uv.choice,2) as choice" +
+			" from votes v left join uservotes uv on uv.puppy_id = v.puppy_id and uv.user_id = ?" +
+			" order by up_votes desc limit ?,?"
+	stmt, err := m.db.Prepare(query)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer stmt.Close()
+	rows, err := stmt.Query(uid,start, perPage)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer rows.Close()
+
+	var rs []*Image
+
+	for rows.Next() {
+		var dbImage Image
+		var id int
+		rows.Scan(&id, &dbImage.ID, &dbImage.Title, &dbImage.Thumbnail, &dbImage.Large, &dbImage.UpVotes, &dbImage.DownVotes,&dbImage.UserChoice)
+		rs = append(rs, &dbImage)
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	return rs
+
+}
 func (m *ImageManager) NewImage(photo Photo) *Image {
 	return &Image{photo.ID, photo.Title, photo.URL(SizeThumbnail), photo.URL(SizeMedium640), 0, 0, 2}
 }

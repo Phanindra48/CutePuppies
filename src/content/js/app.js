@@ -16,6 +16,9 @@ cutePuppies = (function(){
       $('.allPuppies').off().on('click',function(){
         functions.getAllPuppies();
       });
+      $('.topPuppies').off().on('click',function(){
+        functions.getTopPuppies();
+      });
       globals.user_id = $('#user_id').val();
       $('.appLogout').off().on('click',function(){
         $.post('/logout',function(data){
@@ -84,11 +87,16 @@ cutePuppies = (function(){
         });
     },
     getTopPuppies:function(){
+      var params = {
+          "page" : '1',
+          "uid": parseInt(globals.user_id)
+        };
       var jsonStr = JSON.stringify(params)
-      console.log(jsonStr);
       $.ajax({
-        type: 'get',
-        url: '/top'
+        contentType: "application/json; charset=utf-8",
+        type: 'post',
+        url: '/top',
+        data:jsonStr,
       })
       .done(function (data, textStatus, jqXHR) {
         var obj;
@@ -101,7 +109,7 @@ cutePuppies = (function(){
           alert(obj.Error);
         }
         else{
-          $('.page-content').append(data);
+          $('.page-content').html(data);
           functions.bindButtons();
         }
         })

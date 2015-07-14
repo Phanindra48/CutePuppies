@@ -11,7 +11,7 @@ import(
 	"log"
 	"io/ioutil"
 	"html/template"
-	//"strconv"
+	"strconv"
 	//"github.com/jarias/stormpath-sdk-go"
 	//"strings"
 	"os"
@@ -233,6 +233,53 @@ func ListPuppies(w http.ResponseWriter, r *http.Request) {
 	templates.ExecuteTemplate(w,"pups.html",puppiesResponse)
 }
 
+func ListTopPuppies(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("top puppies")
+	var t params
+    contents, err := ioutil.ReadAll(r.Body)
+    if err != nil {
+        fmt.Printf("%s", err)
+        os.Exit(1)
+    }
+    fmt.Printf("contents - > %s\n", string(contents))
+    jsonStr := string(contents)
+    json.Unmarshal([]byte(jsonStr),&t)
+
+	imageManager := NewImageManager()
+	dbError := imageManager.InitDB(false)
+	if dbError != nil {
+		log.Printf("%q\n", dbError)
+		return
+	}
+
+	defer imageManager.GetDB().Close()
+	//fmt.Printf("page-> %s\n",t.page)
+	if t.page == "" {
+		t.page = "1"
+	}
+	pageInt, err := strconv.Atoi(t.page)
+	if err != nil {
+		pageInt = 0
+	}
+
+	puppies := imageManager.GetPuppiesByMostVotes(pageInt,t.uid)
+	count := imageManager.GetPuppiesCount()
+
+	perPage := 20
+	pages := count / perPage
+
+	searchResponse := PuppiesResponse{pageInt, pages, perPage, count, puppies}
+
+	//response, err := json.Marshal(searchResponse)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	templates.ExecuteTemplate(w,"pups.html",searchResponse)
+}
+
 func UpdatePuppy(w http.ResponseWriter, r *http.Request) {
 	var v Vote
     contents, err := ioutil.ReadAll(r.Body)
@@ -409,6 +456,9 @@ func main(){
 	}
 	pups := r.Path(PathPrefix).Subrouter()
 	pups.Methods("POST").HandlerFunc(ListPuppies)
+
+	topPups := r.Path(TopPupsPrefix).Subrouter()
+	topPups.Methods("POST").HandlerFunc(ListTopPuppies)
 
 	//update puppy likes/dislikes
 	pupsUpdate := r.Path(UpdatePups).Subrouter()
