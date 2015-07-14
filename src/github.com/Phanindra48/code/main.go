@@ -102,8 +102,8 @@ type PuppiesResponse struct {
 }
 
 type params struct {
-	page string `json:"page"`
-	uid int `json:"uid"`
+	Page int `json:"page"`
+	Uid int `json:"uid"`
 }
 
 func ListPuppies(w http.ResponseWriter, r *http.Request) {
@@ -117,20 +117,20 @@ func ListPuppies(w http.ResponseWriter, r *http.Request) {
     jsonStr := string(contents)
     json.Unmarshal([]byte(jsonStr),&t)
 
-    fmt.Printf("page ID -> %s uid-> %d \n",t.page,t.uid)
-	if t.page == "" {
-		t.page = "1"
+    fmt.Println(t.Page,t.Uid)
+	if t.Page == 0 {
+		t.Page = 1
 	}
 	tags := "puppy,dogs,dog,cute,pugs"
 
 	baseUrl, err := url.Parse(FlickrEndPoint)
-
+	page := strconv.Itoa(t.Page)
 	params := url.Values{}
 	params.Add("method", FlickrQuery)
 	params.Add("api_key", FlickrKey)
 	params.Add("tags", tags)
 	params.Add("per_page", "20")
-	params.Add("page", t.page)
+	params.Add("page", page)
 	params.Add("safe_search", "2")
 	params.Add("group_id","603018@N22")
 	params.Add("sort", "date-posted-asc")
@@ -185,7 +185,7 @@ func ListPuppies(w http.ResponseWriter, r *http.Request) {
 
 	all := imageManager.All()
 
-	dbPuppies := imageManager.FindOldPuppies(tempIDs,t.uid)
+	dbPuppies := imageManager.FindOldPuppies(tempIDs,t.Uid)
 
 	var newPuppies []*Image
 
@@ -254,21 +254,25 @@ func ListTopPuppies(w http.ResponseWriter, r *http.Request) {
 
 	defer imageManager.GetDB().Close()
 	//fmt.Printf("page-> %s\n",t.page)
-	if t.page == "" {
-		t.page = "1"
+	if t.Page == 0 {
+		t.Page = 1
 	}
+	/*
 	pageInt, err := strconv.Atoi(t.page)
 	if err != nil {
 		pageInt = 0
 	}
+	*/
+	//pageInt := t.page
 
-	puppies := imageManager.GetPuppiesByMostVotes(pageInt,t.uid)
+
+	puppies := imageManager.GetPuppiesByMostVotes(t.Page,t.Uid)
 	count := imageManager.GetPuppiesCount()
 
 	perPage := 20
 	pages := count / perPage
 
-	searchResponse := PuppiesResponse{pageInt, pages, perPage, count, puppies}
+	searchResponse := PuppiesResponse{t.Page, pages, perPage, count, puppies}
 
 	//response, err := json.Marshal(searchResponse)
 

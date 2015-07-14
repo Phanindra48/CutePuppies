@@ -8,15 +8,17 @@ cutePuppies = (function(){
   var globals = {
     upvotes:[],
     downvotes:[],
-    currentPage:"1",
+    currentPage:0,
     user_id:0
   }
   var functions = {
     init:function(){
       $('.allPuppies').off().on('click',function(){
+        globals.currentPage = 0;
         functions.getAllPuppies();
       });
       $('.topPuppies').off().on('click',function(){
+        globals.currentPage = 0;
         functions.getTopPuppies();
       });
       globals.user_id = $('#user_id').val();
@@ -24,6 +26,12 @@ cutePuppies = (function(){
         $.post('/logout',function(data){
           window.location.href = '/'
         });
+      });
+
+      $(window).scroll(function(){
+        if ($(window).scrollTop() == $(document).height() - $(window).height()){
+          functions.getAllPuppies();
+        }
       });
       functions.getAllPuppies();
     },
@@ -55,8 +63,9 @@ cutePuppies = (function(){
 
     },
     getAllPuppies:function(){
+      globals.currentPage++;
       var params = {
-          "page" : '1',
+          "page" : globals.currentPage,
           "uid": parseInt(globals.user_id)
         };
       var jsonStr = JSON.stringify(params)
@@ -87,8 +96,9 @@ cutePuppies = (function(){
         });
     },
     getTopPuppies:function(){
+      globals.currentPage++;
       var params = {
-          "page" : '1',
+          "page" : globals.currentPage,
           "uid": parseInt(globals.user_id)
         };
       var jsonStr = JSON.stringify(params)
