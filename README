@@ -1,1 +1,29 @@
 #Cute Puppies App
+
+Synopsis
+--------
+This is small web app where you can find adorable puppies/pugs and can like or dislike them and also can see all the top puppies that are hitting the leader board from the likes of other users.
+
+
+Installation
+------------
+You can install this by downloading this project to your local (assuming you go and node installed) and add the code folder (you can find that under src/github.com/Phaindra48/code) to your GOPATH and build (run -> go build in cmd line). This will run all *.go files and will create bin file. In windows you can run that using ./code and that's it you'r done with setting up the project
+
+
+
+Usage
+-----
+You can sign-in with your mail id
+No sign up (for now)
+
+
+
+API Reference
+-------------
+I have used flickr API for fetching photos
+
+
+
+Contributors
+------------
+Phanindra Pydisetty
